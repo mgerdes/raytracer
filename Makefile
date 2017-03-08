@@ -1,5 +1,5 @@
 all:
-	ghc Main
+	ghc -O2 --make Main
 
-clear:
-	rm *.o *.hi
+clean:
+	rm *.o *.hi Main

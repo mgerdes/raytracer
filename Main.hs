@@ -12,9 +12,6 @@ backGroundColor :: Ray -> Vec3
 backGroundColor ray = 
     let (_, rdy, _) = rayDirection ray 
         t = 0.5 * rdy + 0.5
-        -- r = round(255.0 * ((1.0 - t) + 0.5 * t))
-        -- g = round(255.0 * ((1.0 - t) + 0.7 * t))
-        -- b = round(255.0 * ((1.0 - t) + 1.0 * t))
         r = (1.0 - t) + 0.5 * t
         g = (1.0 - t) + 0.7 * t
         b = (1.0 - t) + 1.0 * t
@@ -22,14 +19,16 @@ backGroundColor ray =
 
 colorHitRec :: HitRec -> Vec3
 colorHitRec hitRec = 
-    let (nx, ny, nz) = normalize (hrNormal hitRec)
-        -- r = round(255.0 * (0.5 * nx + 0.5))
-        -- g = round(255.0 * (0.5 * ny + 0.5))
-        -- b = round(255.0 * (0.5 * nz + 0.5))
-        r = 0.5 * nx + 0.5
-        g = 0.5 * ny + 0.5
-        b = 0.5 * nz + 0.5
-    in (r, g, b)
+    let n = hrNormal hitRec
+        p = hrPosition hitRec
+        t = hrTime hitRec
+
+        -- Super hacky way of generating a somewhat random number
+        kindaRand = 1000000.0 * t
+
+        target = p <+> n <+> (randomInUnitSphere (round kindaRand))
+        ray = Ray p (normalize (target <-> p))
+    in color ray <*> 0.5
 
 color :: Ray -> Vec3
 color ray = 
@@ -39,14 +38,14 @@ color ray =
          otherwise -> colorHitRec (minimum hitRecs)
 
 hitables :: [Hitable]
-hitables = [Sphere { sphereCenter = (0.0, 0.0, -1.0), sphereRadius = 0.5 },
-            Sphere { sphereCenter = (0.0, -100.5, -1.0), sphereRadius = 100.0 }]
+hitables = [Sphere { sphereCenter = (0.0, 0.0, 0.0), sphereRadius = 0.5 },
+            Sphere { sphereCenter = (0.0, -100.5, 0.0), sphereRadius = 100.0 }]
 
 camera :: Camera
-camera = Camera { camOrigin = (0.0, 0.0, 0.0),
-                  camLowerLeft = (-2.0, -1.0, -1.0),
+camera = Camera { camOrigin = (0.0, 5.0, 0.0),
+                  camLowerLeft = (-2.0, 0.0, -1.0),
                   camWidth = (4.0, 0.0, 0.0), 
-                  camHeight = (0.0, 2.0, 0.0) }
+                  camHeight = (0.0, 0.0, 2.0) }
 
 width :: Int
 width = 400
@@ -59,7 +58,7 @@ randomList seed = randoms (mkStdGen seed)
 
 func :: Int -> Int -> PixelRGB8
 func x y = 
-    let ns = 100
+    let ns = 10
         xs = take ns (map (\r -> (fromIntegral x) + r) (randomList y))
         ys = take ns (map (\r -> (fromIntegral y) + r) (randomList x))
         colors = zipWith func' xs ys
