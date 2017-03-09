@@ -4,10 +4,12 @@ import Prelude hiding ((<*>))
 import Vec3
 import Ray
 import HitRecord
+import Material
 
 data Hitable = Sphere {
     sphereCenter :: Vec3,
-    sphereRadius :: Double
+    sphereRadius :: Double,
+    sphereMaterial :: Material
 } deriving Show
 
 intersect :: Ray -> Hitable -> Maybe HitRec
@@ -32,4 +34,7 @@ intersect ray sphere =
          if det < 0 || t < 0 then
              Nothing
          else
-            Just HitRec { hrTime = t, hrPosition = position, hrNormal = normal }
+            Just HitRec { hrTime = t, 
+                          hrPosition = position, 
+                          hrNormal = normal,
+                          hrMaterial = sphereMaterial sphere }

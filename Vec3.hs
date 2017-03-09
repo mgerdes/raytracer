@@ -15,7 +15,7 @@ type Vec3 = (Double, Double, Double)
 (x, y, z) <*> s = ((s * x), (s * y), (s * z))
 
 (</>) :: Vec3 -> Double -> Vec3 
-(x, y, z) </> s = ((s / x), (s / y), (s / z))
+(x, y, z) </> s = ((x / s), (y / s), (z / s))
 
 normalize :: Vec3 -> Vec3
 normalize v =  v <*> (1.0 / sqrt (dot v v))
@@ -28,6 +28,12 @@ cross (x0, y0, z0) (x1, y1, z1) = (y0 * z1 - z0 * y1, z0 * x1 - x0 * z1, x0 * y1
 
 zero :: Vec3
 zero = (0.0, 0.0, 0.0)
+
+reflect :: Vec3 -> Vec3 -> Vec3
+reflect v n = v <-> (n <*> (2 * (dot v n)))
+
+gammaCorrect :: Vec3 -> Vec3
+gammaCorrect (r, g, b) = (sqrt(r), sqrt(g), sqrt(b))
 
 randomInUnitSphere :: Int -> Vec3
 randomInUnitSphere seed = 
