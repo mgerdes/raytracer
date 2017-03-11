@@ -1,6 +1,7 @@
 module Ray where
 
 import Prelude hiding ((<*>))
+
 import Vec3
 
 data Ray = Ray {

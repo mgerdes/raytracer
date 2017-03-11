@@ -9,31 +9,7 @@ import Camera
 import Ray
 import Vec3
 import Material
-
-backGroundColor :: Ray -> Vec3
-backGroundColor ray = 
-    let (_, rdy, _) = rayDirection ray 
-        t = 0.5 * rdy + 0.5
-        r = (1.0 - t) + 0.5 * t
-        g = (1.0 - t) + 0.7 * t
-        b = (1.0 - t) + 1.0 * t
-    in (r, g, b)
-
-colorHitRec :: HitRec -> Ray -> Int -> Vec3
-colorHitRec hr rayIn depth = 
-    let (rayOut, (ax, ay, az)) = scatter (hrMaterial hr) rayIn (hrPosition hr) (hrNormal hr)
-        (cx, cy, cz) = color rayOut (depth + 1)
-    in (ax * cx, ay * cy, az * cz)
-
-color :: Ray -> Int -> Vec3
-color ray depth = 
-    if depth > 50 
-    then (0.0, 0.0, 0.0)
-    else
-        let hitRecs = catMaybes (map (intersect ray) hitables)
-        in case hitRecs of
-             []        -> backGroundColor ray
-             otherwise -> colorHitRec (minimum hitRecs) ray depth
+import BVHTree
 
 hitableType :: ((Int, Int), Int) -> Hitable
 hitableType ((x, y), rand) 
@@ -70,6 +46,34 @@ hitables = map hitableType (zip [(x, y) | x <- [-10..10], y <- [-10..10]] (rando
                           sphereRadius = 1000.0,
                           sphereMaterial = Lambertian (0.8, 0.8, 0.8) } ]
 
+bvh :: BVHTree
+bvh = createBVHTree hitables (mkStdGen 10)
+
+backGroundColor :: Ray -> Vec3
+backGroundColor ray = 
+    let (_, rdy, _) = rayDirection ray 
+        t = 0.5 * rdy + 0.5
+        r = (1.0 - t) + 0.5 * t
+        g = (1.0 - t) + 0.7 * t
+        b = (1.0 - t) + 1.0 * t
+    in (r, g, b)
+
+colorHitRec :: HitRec -> Ray -> Int -> Vec3
+colorHitRec hr rayIn depth = 
+    let (rayOut, (ax, ay, az)) = scatter (hrMaterial hr) rayIn (hrPosition hr) (hrNormal hr)
+        (cx, cy, cz) = color rayOut (depth + 1)
+    in (ax * cx, ay * cy, az * cz)
+
+color :: Ray -> Int -> Vec3
+color ray depth = 
+    if depth > 50 
+    then (0.0, 0.0, 0.0)
+    else
+        let hitRec = bvhIntersect bvh ray
+        in case hitRec of
+             Just hr   -> colorHitRec hr ray depth
+             Nothing   -> backGroundColor ray
+
 width :: Int
 width = 800
 
@@ -102,7 +106,7 @@ func' x y =
 
 func :: Int -> Int -> PixelRGB8
 func x y = 
-    let ns = 100
+    let ns = 10
         xs = take ns (map (\r -> (fromIntegral x) + r) (randomList y))
         ys = take ns (map (\r -> (fromIntegral y) + r) (randomList x))
         colors = zipWith func' xs ys

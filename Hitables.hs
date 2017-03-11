@@ -6,14 +6,14 @@ import Ray
 import HitRecord
 import Material
 
-data Hitable = Sphere {
+data Hitable = Sphere { 
     sphereCenter :: Vec3,
     sphereRadius :: Double,
     sphereMaterial :: Material
 } deriving Show
 
-intersect :: Ray -> Hitable -> Maybe HitRec
-intersect ray sphere =
+hitableIntersect :: Hitable -> Ray -> Maybe HitRec
+hitableIntersect sphere ray =
      let ro = rayOrigin ray
          rd = rayDirection ray
          so = sphereCenter sphere
