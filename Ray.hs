@@ -10,5 +10,3 @@ data Ray = Ray {
          
 pointAtTime :: Ray -> Double -> Vec3
 pointAtTime ray t = (rayOrigin ray) <+> ((rayDirection ray) <*> t) 
-
-

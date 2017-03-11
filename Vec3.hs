@@ -23,6 +23,9 @@ normalize v =  v <*> (1.0 / sqrt (dot v v))
 dot :: Vec3 -> Vec3 -> Double 
 dot (x0, y0, z0) (x1, y1, z1) = x0 * x1 + y0 * y1 + z0 * z1
 
+distance :: Vec3 -> Vec3 -> Double
+distance v0 v1 = sqrt (dot (v0 <-> v1) (v0 <-> v1))
+
 cross :: Vec3 -> Vec3 -> Vec3
 cross (x0, y0, z0) (x1, y1, z1) = (y0 * z1 - z0 * y1, z0 * x1 - x0 * z1, x0 * y1 - y0 * x1)
 
@@ -35,6 +38,17 @@ reflect v n = v <-> (n <*> (2 * (dot v n)))
 gammaCorrect :: Vec3 -> Vec3
 gammaCorrect (r, g, b) = (sqrt(r), sqrt(g), sqrt(b))
 
+-- http://mathworld.wolfram.com/DiskPointPicking.html
+-- Returns a point in the unit sphere in the x-y plane
+randomInUnitDisk :: Int -> Vec3
+randomInUnitDisk seed = 
+    let r0 = randomR (0.0, 1.0) (mkStdGen seed)
+        r1 = randomR (0.0, 2.0 * pi) (snd r0)
+        r = sqrt (fst r0)
+        theta = fst r1
+    in  (r * cos(theta), r * sin(theta), 0.0)
+
+-- http://math.stackexchange.com/questions/87230/picking-random-points-in-the-volume-of-sphere-with-uniform-probability
 randomInUnitSphere :: Int -> Vec3
 randomInUnitSphere seed = 
     let r0 = randomR (-1.0, 1.0) (mkStdGen seed)
