@@ -13,11 +13,12 @@ data Hitable = Sphere {
 } deriving Show
 
 hitableIntersect :: Hitable -> Ray -> Maybe HitRec
-hitableIntersect sphere ray =
+hitableIntersect Sphere { sphereCenter = so,
+                          sphereRadius = sr,
+                          sphereMaterial = sm } 
+                 ray =
      let ro = rayOrigin ray
          rd = rayDirection ray
-         so = sphereCenter sphere
-         sr = sphereRadius sphere
 
          a = dot rd rd
          b = 2.0 * (dot rd (ro <-> so))
@@ -37,4 +38,4 @@ hitableIntersect sphere ray =
             Just HitRec { hrTime = t, 
                           hrPosition = position, 
                           hrNormal = normal,
-                          hrMaterial = sphereMaterial sphere }
+                          hrMaterial = sm }

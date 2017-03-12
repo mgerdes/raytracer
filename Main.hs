@@ -1,5 +1,4 @@
 import Codec.Picture
-import Data.Maybe (isJust, catMaybes)
 import System.Random
 import Prelude hiding ((<*>))
 
@@ -10,21 +9,22 @@ import Ray
 import Vec3
 import Material
 import BVHTree
+import Texture
 
 hitableType :: ((Int, Int), Int) -> Hitable
 hitableType ((x, y), rand) 
     | t < 0.7   = Sphere { sphereCenter = (x', 0.2, y'),  
                            sphereRadius = 0.2,
-                           sphereMaterial = Lambertian (r, g, b) }
+                           sphereMaterial = Lambertian (ConstantTexture (r, g, b)) }
     | otherwise = Sphere { sphereCenter = (x', 0.2, y'),  
                            sphereRadius = 0.2,
-                           sphereMaterial = Metal (r, g, b) }
+                           sphereMaterial = Metal (ConstantTexture (r, g, b)) }
     where (dx, r0) = randomR (0.0, 0.9) (mkStdGen rand)
           (dy, r1) = randomR (0.0, 0.9) r0
           (r, r2) = randomR (0.0, 1.0) r1
           (g, r3) = randomR (0.0, 1.0) r2
           (b, r4) = randomR (0.0, 1.0) r3
-          (t, r5) = randomR (0.0, 1.0) r4 :: (Double, StdGen)
+          (t, _) = randomR (0.0, 1.0) r4 :: (Double, StdGen)
           x' = (fromIntegral x) + dx
           y' = (fromIntegral y) + dy
 
@@ -32,19 +32,20 @@ hitables :: [Hitable]
 hitables = map hitableType (zip [(x, y) | x <- [-10..10], y <- [-10..10]] (randoms (mkStdGen 100)))
             ++ [ Sphere { sphereCenter = (0.0, 1.0, 0.0),
                           sphereRadius = 1.0,
-                          sphereMaterial = Lambertian (0.16, 0.67, 0.53) },
+                          sphereMaterial = Lambertian (ConstantTexture (0.16, 0.67, 0.53)) },
 
                  Sphere { sphereCenter = (-4.0, 1.0, 0.0),
                           sphereRadius = 1.0,
-                          sphereMaterial = Metal (0.70, 0.75, 0.71) },
+                          sphereMaterial = Metal (ConstantTexture (0.70, 0.75, 0.71)) },
                         
                  Sphere { sphereCenter = (4.0, 1.0, 0.0),
                           sphereRadius = 1.0,
-                          sphereMaterial = Metal (0.87, 0.72, 0.53) },
+                          sphereMaterial = Metal (ConstantTexture (0.87, 0.72, 0.53)) },
 
                  Sphere { sphereCenter = (0.0, -1000.0, 0.0),
                           sphereRadius = 1000.0,
-                          sphereMaterial = Lambertian (0.8, 0.8, 0.8) } ]
+                          sphereMaterial = Lambertian (CheckeredTexture (ConstantTexture (0.8, 0.8, 0.8)) 
+                                                                        (ConstantTexture (0.2, 0.2, 0.2))) } ]
 
 bvh :: BVHTree
 bvh = createBVHTree hitables (mkStdGen 10)
@@ -106,9 +107,9 @@ func' x y =
 
 func :: Int -> Int -> PixelRGB8
 func x y = 
-    let ns = 10
-        xs = take ns (map (\r -> (fromIntegral x) + r) (randomList y))
-        ys = take ns (map (\r -> (fromIntegral y) + r) (randomList x))
+    let ns = 100
+        xs = take ns (map (\rand -> (fromIntegral x) + rand) (randomList y))
+        ys = take ns (map (\rand -> (fromIntegral y) + rand) (randomList x))
         colors = zipWith func' xs ys
         (r, g, b) = (gammaCorrect ((foldl (<+>) zero colors) </> (fromIntegral ns))) <*> 255.0
     in PixelRGB8 (round r) (round g) (round b)

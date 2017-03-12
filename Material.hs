@@ -2,11 +2,12 @@ module Material where
 
 import Ray
 import Vec3
+import Texture
 
-data Material = Lambertian Vec3 | Metal Vec3 deriving Show
+data Material = Lambertian Texture | Metal Texture deriving Show
 
 scatter :: Material -> Ray -> Vec3 -> Vec3 -> (Ray, Vec3)
-scatter (Lambertian albedo) rayIn hitPosition hitNormal =  
+scatter (Lambertian albedo) _ hitPosition hitNormal =  
     let p = hitPosition
         n = hitNormal
 
@@ -17,13 +18,12 @@ scatter (Lambertian albedo) rayIn hitPosition hitNormal =
 
         target = p <+> n <+> (randomInUnitSphere (round kindaRand))
         scattered = Ray { rayOrigin = p, rayDirection = (normalize (target <-> p)) }
-    in (scattered, albedo) 
+    in (scattered, textureValue albedo hitPosition) 
 
 scatter (Metal albedo) rayIn hitPosition hitNormal = 
-    let ro = rayOrigin rayIn
-        rd = rayDirection rayIn
+    let rd = rayDirection rayIn
         p = hitPosition
         n = hitNormal
 
         scattered = Ray { rayOrigin = p, rayDirection = reflect rd n }
-    in (scattered, albedo)
+    in (scattered, textureValue albedo hitPosition)
