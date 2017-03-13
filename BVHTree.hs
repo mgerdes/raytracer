@@ -84,7 +84,21 @@ createBoundingBox YZRect { yzRect_y0 = y0, yzRect_y1 = y1,
                            yzRect_x = x } =
     BoundingBox { bbMin = (x - 0.0001, y0, z0), bbMax = (x + 0.0001, y1, z1) }   
 
-createBoundingBox FlipNormals { hitable = h } = createBoundingBox h   
+createBoundingBox FlipNormals { flipNormalsHitable = h } = createBoundingBox h   
+
+createBoundingBox Translate { translateHitable = h, translateOffset = o } = 
+    let bb = createBoundingBox h   
+    in BoundingBox { bbMin = (bbMin bb) <+> o, bbMax = (bbMax bb) <+> o }
+
+createBoundingBox RotateY { rotateYHitable = h, rotateYCos = c, rotateYSin = s } = 
+    let bb = createBoundingBox h   
+        (x0, y0, z0) = bbMin bb
+        (x1, y1, z1) = bbMax bb
+        bbPts = map (\(u, v, w) -> rotateY (x0 + u * x1, y0 + v * y1, z0 + w * z1) c s) 
+                    [(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)]
+        minPt = foldl minCoord (head bbPts) (tail bbPts)
+        maxPt = foldl maxCoord (head bbPts) (tail bbPts)
+    in BoundingBox { bbMin = minPt, bbMax = maxPt }
 
 createBoundingBox Box { boxMin = bMin, boxMax = bMax } =   
     BoundingBox { bbMin = bMin, bbMax = bMax }

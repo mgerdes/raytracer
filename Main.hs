@@ -29,39 +29,64 @@ hitableType ((x, y), rand)
           y' = (fromIntegral y) + dy
 
 hitables :: [Hitable]
-hitables = [ createBox (130.0, 0.0, 65.0) (295.0, 165.0, 230.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))),
+hitables = [ 
+    Translate {
+        translateOffset = (130.0, 0.0, 65.0),
+        translateHitable = RotateY { 
+            rotateYCos = cos (-0.314),
+            rotateYSin = sin (-0.314),
+            rotateYHitable = createBox (0.0, 0.0, 0.0) (165.0, 165.0, 165.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))) 
+    }},
 
-             createBox (265.0, 0.0, 295.0) (430.0, 330.0, 460.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))),
+    Translate {
+        translateOffset = (265.0, 0.0, 295.0),
+        translateHitable = RotateY { 
+            rotateYCos = cos 0.261,
+            rotateYSin = sin 0.261,
+            rotateYHitable = createBox (0.0, 0.0, 0.0) (165.0, 330.0, 165.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))) 
+    }},
 
-             FlipNormals YZRect { yzRect_y0 = 0, yzRect_y1 = 555,
-                                  yzRect_z0 = 0, yzRect_z1 = 555,
-                                  yzRect_x = 555,
-                                  yzRectMaterial = Lambertian (ConstantTexture (0.12, 0.45, 0.15)) },
+    FlipNormals YZRect { 
+        yzRect_y0 = 0, yzRect_y1 = 555,
+        yzRect_z0 = 0, yzRect_z1 = 555,
+        yzRect_x = 555,
+        yzRectMaterial = Lambertian (ConstantTexture (0.12, 0.45, 0.15)) 
+    },
 
-             YZRect { yzRect_y0 = 0, yzRect_y1 = 555,
-                      yzRect_z0 = 0, yzRect_z1 = 555,
-                      yzRect_x = 0,
-                      yzRectMaterial = Lambertian (ConstantTexture (0.65, 0.05, 0.05)) },
+    YZRect { 
+        yzRect_y0 = 0, yzRect_y1 = 555,
+        yzRect_z0 = 0, yzRect_z1 = 555,
+        yzRect_x = 0,
+        yzRectMaterial = Lambertian (ConstantTexture (0.65, 0.05, 0.05)) 
+    },
 
-             XZRect { xzRect_x0 = 113, xzRect_x1 = 443,
-                      xzRect_z0 = 127, xzRect_z1 = 432,
-                      xzRect_y = 554,
-                      xzRectMaterial = DiffuseLight (ConstantTexture (7.0, 7.0, 7.0)) },
+    XZRect {
+        xzRect_x0 = 113, xzRect_x1 = 443,
+        xzRect_z0 = 127, xzRect_z1 = 432,
+        xzRect_y = 554,
+        xzRectMaterial = DiffuseLight (ConstantTexture (7.0, 7.0, 7.0)) 
+    },
 
-             XZRect { xzRect_x0 = 0, xzRect_x1 = 555,
-                      xzRect_z0 = 0, xzRect_z1 = 555,
-                      xzRect_y = 0,
-                      xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) },
+    XZRect { 
+        xzRect_x0 = 0, xzRect_x1 = 555,
+        xzRect_z0 = 0, xzRect_z1 = 555,
+        xzRect_y = 0,
+        xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+    },
 
-             FlipNormals XZRect { xzRect_x0 = 0, xzRect_x1 = 555,
-                                  xzRect_z0 = 0, xzRect_z1 = 555,
-                                  xzRect_y = 555,
-                                  xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) },
+    FlipNormals XZRect { 
+        xzRect_x0 = 0, xzRect_x1 = 555,
+        xzRect_z0 = 0, xzRect_z1 = 555,
+        xzRect_y = 555,
+        xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+    },
 
-             FlipNormals XYRect { xyRect_x0 = 0, xyRect_x1 = 555,
-                                  xyRect_y0 = 0, xyRect_y1 = 555,
-                                  xyRect_z = 555,
-                                  xyRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) } ]
+     FlipNormals XYRect { 
+        xyRect_x0 = 0, xyRect_x1 = 555,
+        xyRect_y0 = 0, xyRect_y1 = 555,
+        xyRect_z = 555,
+        xyRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+     } ]
 
 bvh :: BVHTree
 bvh = createBVHTree hitables (mkStdGen 10)
@@ -122,13 +147,13 @@ randomList seed = randoms (mkStdGen seed)
 
 func' :: Double -> Double -> Vec3
 func' x y = 
-    let u = 1.0 - (x / (fromIntegral width))
+    let u = x / (fromIntegral width)
         v = 1.0 - (y / (fromIntegral height))
     in color (createRay camera u v) 0 
 
 func :: Int -> Int -> PixelRGB8
 func x y = 
-    let ns = 10
+    let ns = 100
         xs = take ns (map (\rand -> (fromIntegral x) + rand) (randomList y))
         ys = take ns (map (\rand -> (fromIntegral y) + rand) (randomList x))
         colors = zipWith func' xs ys

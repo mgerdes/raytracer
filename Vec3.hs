@@ -35,12 +35,23 @@ zero = (0.0, 0.0, 0.0)
 reflect :: Vec3 -> Vec3 -> Vec3
 reflect v n = v <-> (n <*> (2 * (dot v n)))
 
+-- Rotates a vector: takes in the cos and sin of the rotation angle
+rotateY :: Vec3 -> Double -> Double -> Vec3
+rotateY (x, y, z) cosTheta sinTheta = 
+    (cosTheta * x + sinTheta * z, y, (- sinTheta * x) + cosTheta * z)
+
 gammaCorrect :: Vec3 -> Vec3
 gammaCorrect (r, g, b) = 
     let r' = min (max (sqrt r) 0.0) 1.0
         g' = min (max (sqrt g) 0.0) 1.0
         b' = min (max (sqrt b) 0.0) 1.0
     in (r', g', b')
+
+maxCoord :: Vec3 -> Vec3 -> Vec3
+maxCoord (x0, y0, z0) (x1, y1, z1) = (max x0 x1, max y0 y1, max z0 z1)
+
+minCoord :: Vec3 -> Vec3 -> Vec3
+minCoord (x0, y0, z0) (x1, y1, z1) = (min x0 x1, min y0 y1, min z0 z1)
 
 -- http://mathworld.wolfram.com/DiskPointPicking.html
 -- Returns a point in the unit sphere in the x-y plane

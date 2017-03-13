@@ -34,28 +34,35 @@ data Hitable = Sphere {
     yzRect_x :: Double,
     yzRectMaterial :: Material
 } | FlipNormals {
-    hitable :: Hitable
+    flipNormalsHitable :: Hitable
 } | Box {
     boxMin :: Vec3,
     boxMax :: Vec3,
-    side0 :: Hitable, 
-    side1 :: Hitable, 
-    side2 :: Hitable, 
-    side3 :: Hitable, 
-    side4 :: Hitable, 
-    side5 :: Hitable 
+    boxSide0 :: Hitable, 
+    boxSide1 :: Hitable, 
+    boxSide2 :: Hitable, 
+    boxSide3 :: Hitable, 
+    boxSide4 :: Hitable, 
+    boxSide5 :: Hitable 
+} | Translate {
+    translateOffset :: Vec3,
+    translateHitable :: Hitable
+} | RotateY {
+    rotateYCos :: Double,
+    rotateYSin :: Double,
+    rotateYHitable :: Hitable
 } deriving Show
 
 createBox :: Vec3 -> Vec3 -> Material -> Hitable
 createBox (p0x, p0y, p0z) (p1x, p1y, p1z) mat = 
     Box { boxMin = (p0x, p0y, p0z),
           boxMax = (p1x, p1y, p1z),
-          side0 = XYRect p0x p1x p0y p1y p1z mat,
-          side1 = FlipNormals (XYRect p0x p1x p0y p1y p0z mat),
-          side2 = XZRect p0x p1x p0z p1z p1y mat,
-          side3 = FlipNormals (XZRect p0x p1x p0z p1z p0y mat),
-          side4 = YZRect p0y p1y p0z p1z p1x mat,
-          side5 = FlipNormals (YZRect p0y p1y p0z p1z p0x mat) }
+          boxSide0 = XYRect p0x p1x p0y p1y p1z mat,
+          boxSide1 = FlipNormals (XYRect p0x p1x p0y p1y p0z mat),
+          boxSide2 = XZRect p0x p1x p0z p1z p1y mat,
+          boxSide3 = FlipNormals (XZRect p0x p1x p0z p1z p0y mat),
+          boxSide4 = YZRect p0y p1y p0z p1z p1x mat,
+          boxSide5 = FlipNormals (YZRect p0y p1y p0z p1z p0x mat) }
 
 hitableIntersect :: Hitable -> Ray -> Maybe HitRec
 hitableIntersect Sphere { sphereCenter = so,
@@ -154,7 +161,7 @@ hitableIntersect YZRect { yzRect_y0 = y0,
                           hrNormal = normal,
                           hrMaterial = mat }
 
-hitableIntersect FlipNormals { hitable = h } ray =
+hitableIntersect FlipNormals { flipNormalsHitable = h } ray =
     let maybeHr = hitableIntersect h ray
     in case maybeHr of
         Just hr -> Just HitRec { hrTime = hrTime hr,
@@ -163,9 +170,31 @@ hitableIntersect FlipNormals { hitable = h } ray =
                                  hrMaterial = hrMaterial hr }
         Nothing -> Nothing
 
-hitableIntersect Box { side0 = s0, side1 = s1, 
-                       side2 = s2, side3 = s3, 
-                       side4 = s4, side5 = s5 }
+hitableIntersect Translate { translateHitable = h, translateOffset = o }
+                 Ray { rayOrigin = ro, rayDirection = rd } =
+    let r = Ray { rayOrigin = ro <-> o, rayDirection = rd }
+        maybeHr = hitableIntersect h r
+    in case maybeHr of
+        Just hr -> Just HitRec { hrTime = hrTime hr,
+                                 hrPosition = (hrPosition hr) <+> o,
+                                 hrNormal = hrNormal hr,
+                                 hrMaterial = hrMaterial hr }
+        Nothing -> Nothing
+
+hitableIntersect RotateY { rotateYHitable = h, rotateYSin = s, rotateYCos = c }
+                 Ray { rayOrigin = ro, rayDirection = rd } =
+    let r = Ray { rayOrigin = rotateY ro c (-s), rayDirection = rotateY rd c (-s) }
+        maybeHr = hitableIntersect h r
+    in case maybeHr of
+        Just hr -> Just HitRec { hrTime = hrTime hr,
+                                 hrPosition = rotateY (hrPosition hr) c s,
+                                 hrNormal = rotateY (hrNormal hr) c s,
+                                 hrMaterial = hrMaterial hr }
+        Nothing -> Nothing
+
+hitableIntersect Box { boxSide0 = s0, boxSide1 = s1, 
+                       boxSide2 = s2, boxSide3 = s3, 
+                       boxSide4 = s4, boxSide5 = s5 }
                  ray =
     let hrs = catMaybes (map (\h -> hitableIntersect h ray) [s0, s1, s2, s3, s4, s5])
     in case hrs of
