@@ -4,9 +4,12 @@ import Ray
 import Vec3
 import Texture
 
-data Material = Lambertian Texture | Metal Texture deriving Show
+data Material = Lambertian Texture |
+                Metal Texture | 
+                DiffuseLight Texture deriving Show
 
-scatter :: Material -> Ray -> Vec3 -> Vec3 -> (Ray, Vec3)
+scatter :: Material -> Ray -> Vec3 -> Vec3 -> Maybe (Ray, Vec3)
+
 scatter (Lambertian albedo) _ hitPosition hitNormal =  
     let p = hitPosition
         n = hitNormal
@@ -18,7 +21,7 @@ scatter (Lambertian albedo) _ hitPosition hitNormal =
 
         target = p <+> n <+> (randomInUnitSphere (round kindaRand))
         scattered = Ray { rayOrigin = p, rayDirection = (normalize (target <-> p)) }
-    in (scattered, textureValue albedo hitPosition) 
+    in Just (scattered, textureValue albedo hitPosition) 
 
 scatter (Metal albedo) rayIn hitPosition hitNormal = 
     let rd = rayDirection rayIn
@@ -26,4 +29,11 @@ scatter (Metal albedo) rayIn hitPosition hitNormal =
         n = hitNormal
 
         scattered = Ray { rayOrigin = p, rayDirection = reflect rd n }
-    in (scattered, textureValue albedo hitPosition)
+    in Just (scattered, textureValue albedo hitPosition)
+
+scatter (DiffuseLight _) _ _ _ = Nothing
+
+materialEmitted :: Material -> Vec3 -> Vec3
+materialEmitted (Lambertian _) _ = (0.0, 0.0, 0.0)
+materialEmitted (Metal _) _ = (0.0, 0.0, 0.0)
+materialEmitted (DiffuseLight t) p = textureValue t p 

@@ -29,23 +29,39 @@ hitableType ((x, y), rand)
           y' = (fromIntegral y) + dy
 
 hitables :: [Hitable]
-hitables = map hitableType (zip [(x, y) | x <- [-10..10], y <- [-10..10]] (randoms (mkStdGen 100)))
-            ++ [ Sphere { sphereCenter = (0.0, 1.0, 0.0),
-                          sphereRadius = 1.0,
-                          sphereMaterial = Lambertian (ConstantTexture (0.16, 0.67, 0.53)) },
+hitables = [ createBox (130.0, 0.0, 65.0) (295.0, 165.0, 230.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))),
 
-                 Sphere { sphereCenter = (-4.0, 1.0, 0.0),
-                          sphereRadius = 1.0,
-                          sphereMaterial = Metal (ConstantTexture (0.70, 0.75, 0.71)) },
-                        
-                 Sphere { sphereCenter = (4.0, 1.0, 0.0),
-                          sphereRadius = 1.0,
-                          sphereMaterial = Metal (ConstantTexture (0.87, 0.72, 0.53)) },
+             createBox (265.0, 0.0, 295.0) (430.0, 330.0, 460.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))),
 
-                 Sphere { sphereCenter = (0.0, -1000.0, 0.0),
-                          sphereRadius = 1000.0,
-                          sphereMaterial = Lambertian (CheckeredTexture (ConstantTexture (0.8, 0.8, 0.8)) 
-                                                                        (ConstantTexture (0.2, 0.2, 0.2))) } ]
+             FlipNormals YZRect { yzRect_y0 = 0, yzRect_y1 = 555,
+                                  yzRect_z0 = 0, yzRect_z1 = 555,
+                                  yzRect_x = 555,
+                                  yzRectMaterial = Lambertian (ConstantTexture (0.12, 0.45, 0.15)) },
+
+             YZRect { yzRect_y0 = 0, yzRect_y1 = 555,
+                      yzRect_z0 = 0, yzRect_z1 = 555,
+                      yzRect_x = 0,
+                      yzRectMaterial = Lambertian (ConstantTexture (0.65, 0.05, 0.05)) },
+
+             XZRect { xzRect_x0 = 113, xzRect_x1 = 443,
+                      xzRect_z0 = 127, xzRect_z1 = 432,
+                      xzRect_y = 554,
+                      xzRectMaterial = DiffuseLight (ConstantTexture (7.0, 7.0, 7.0)) },
+
+             XZRect { xzRect_x0 = 0, xzRect_x1 = 555,
+                      xzRect_z0 = 0, xzRect_z1 = 555,
+                      xzRect_y = 0,
+                      xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) },
+
+             FlipNormals XZRect { xzRect_x0 = 0, xzRect_x1 = 555,
+                                  xzRect_z0 = 0, xzRect_z1 = 555,
+                                  xzRect_y = 555,
+                                  xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) },
+
+             FlipNormals XYRect { xyRect_x0 = 0, xyRect_x1 = 555,
+                                  xyRect_y0 = 0, xyRect_y1 = 555,
+                                  xyRect_z = 555,
+                                  xyRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) } ]
 
 bvh :: BVHTree
 bvh = createBVHTree hitables (mkStdGen 10)
@@ -61,31 +77,36 @@ backGroundColor ray =
 
 colorHitRec :: HitRec -> Ray -> Int -> Vec3
 colorHitRec hr rayIn depth = 
-    let (rayOut, (ax, ay, az)) = scatter (hrMaterial hr) rayIn (hrPosition hr) (hrNormal hr)
-        (cx, cy, cz) = color rayOut (depth + 1)
-    in (ax * cx, ay * cy, az * cz)
+    let maybeScatter = scatter (hrMaterial hr) rayIn (hrPosition hr) (hrNormal hr)
+        (ex, ey, ez) = materialEmitted (hrMaterial hr) (hrPosition hr)
+    in 
+        if depth > 50 then
+            (ex, ey, ez)
+        else
+            case maybeScatter of
+                 Just (rayOut, (ax, ay, az)) -> 
+                    let (cx, cy, cz) = color rayOut (depth + 1)
+                    in (ex, ey, ez) <+> (ax * cx, ay * cy, az * cz)
+                 Nothing -> (ex, ey, ez)
 
 color :: Ray -> Int -> Vec3
 color ray depth = 
-    if depth > 50 
-    then (0.0, 0.0, 0.0)
-    else
-        let hitRec = bvhIntersect bvh ray
-        in case hitRec of
-             Just hr   -> colorHitRec hr ray depth
-             Nothing   -> backGroundColor ray
+    let maybeHr = bvhIntersect bvh ray
+    in case maybeHr of
+        Just hr -> colorHitRec hr ray depth
+        Nothing -> (0.0, 0.0, 0.0)
 
 width :: Int
-width = 800
+width = 400
 
 height :: Int
 height = 400
 
 cameraFrom :: Vec3
-cameraFrom = (-7.0, 2.0, 2.5)
+cameraFrom = (278.0, 278.0, -800.0)
 
 cameraTo :: Vec3
-cameraTo = (0.0, 0.0, 0.0)
+cameraTo = (278.0, 278.0, 0.0)
 
 camera :: Camera
 camera = createCamera cameraFrom 
@@ -93,7 +114,7 @@ camera = createCamera cameraFrom
                       (0.0, 1.0, 0.0)
                       40.0 
                       ((fromIntegral width) / (fromIntegral height))
-                      0.05
+                      0.0
                       (distance cameraFrom cameraTo)
 
 randomList :: Int -> [Double]
@@ -107,7 +128,7 @@ func' x y =
 
 func :: Int -> Int -> PixelRGB8
 func x y = 
-    let ns = 100
+    let ns = 10
         xs = take ns (map (\rand -> (fromIntegral x) + rand) (randomList y))
         ys = take ns (map (\rand -> (fromIntegral y) + rand) (randomList x))
         colors = zipWith func' xs ys

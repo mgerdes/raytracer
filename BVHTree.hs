@@ -65,12 +65,35 @@ bvhIntersect (BVHTreeLeaf h0 h1) ray =
     minMaybe (hitableIntersect h0 ray) (hitableIntersect h1 ray)
 
 createBoundingBox :: Hitable -> BoundingBox
+
 createBoundingBox Sphere { sphereCenter = o, sphereRadius = r } = 
     BoundingBox { bbMin = o <-> (r, r, r), bbMax = o <+> (r, r, r) }   
 
+createBoundingBox XYRect { xyRect_x0 = x0, xyRect_x1 = x1, 
+                           xyRect_y0 = y0, xyRect_y1 = y1,
+                           xyRect_z = z } =
+    BoundingBox { bbMin = (x0, y0, z - 0.0001), bbMax = (x1, y1, z + 0.0001) }   
+
+createBoundingBox XZRect { xzRect_x0 = x0, xzRect_x1 = x1, 
+                           xzRect_z0 = z0, xzRect_z1 = z1,
+                           xzRect_y = y } =
+    BoundingBox { bbMin = (x0, y - 0.0001, z0), bbMax = (x1, y + 0.0001, z1) }   
+
+createBoundingBox YZRect { yzRect_y0 = y0, yzRect_y1 = y1, 
+                           yzRect_z0 = z0, yzRect_z1 = z1,
+                           yzRect_x = x } =
+    BoundingBox { bbMin = (x - 0.0001, y0, z0), bbMax = (x + 0.0001, y1, z1) }   
+
+createBoundingBox FlipNormals { hitable = h } = createBoundingBox h   
+
+createBoundingBox Box { boxMin = bMin, boxMax = bMax } =   
+    BoundingBox { bbMin = bMin, bbMax = bMax }
+
 combineBoundingBoxes :: BoundingBox -> BoundingBox -> BoundingBox
-combineBoundingBoxes BoundingBox { bbMin = (min0x, min0y, min0z), bbMax = (max0x, max0y, max0z) } 
-                     BoundingBox { bbMin = (min1x, min1y, min1z), bbMax = (max1x, max1y, max1z) } =
+combineBoundingBoxes BoundingBox { bbMin = (min0x, min0y, min0z),
+                                   bbMax = (max0x, max0y, max0z) } 
+                     BoundingBox { bbMin = (min1x, min1y, min1z),
+                                   bbMax = (max1x, max1y, max1z) } =
     BoundingBox { bbMin = (min min0x min1x, min min0y min1y, min min0z min1z),
                   bbMax = (max max0x max1x, max max0y max1y, max max0z max1z) }
 

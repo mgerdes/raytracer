@@ -36,7 +36,11 @@ reflect :: Vec3 -> Vec3 -> Vec3
 reflect v n = v <-> (n <*> (2 * (dot v n)))
 
 gammaCorrect :: Vec3 -> Vec3
-gammaCorrect (r, g, b) = (sqrt(r), sqrt(g), sqrt(b))
+gammaCorrect (r, g, b) = 
+    let r' = min (max (sqrt r) 0.0) 1.0
+        g' = min (max (sqrt g) 0.0) 1.0
+        b' = min (max (sqrt b) 0.0) 1.0
+    in (r', g', b')
 
 -- http://mathworld.wolfram.com/DiskPointPicking.html
 -- Returns a point in the unit sphere in the x-y plane
