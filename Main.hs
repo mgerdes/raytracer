@@ -11,10 +11,10 @@ import BVHTree
 import Scene
 
 width :: Int
-width = 200
+width = 400
 
 height :: Int
-height = 200
+height = 400
 
 cameraFrom :: Vec3
 cameraFrom = (278.0, 278.0, -800.0)
@@ -63,7 +63,7 @@ colorPixel' x y =
 
 colorPixel :: Int -> Int -> PixelRGB8
 colorPixel x y = 
-    let ns = 100
+    let ns = 1000
         xs = take ns (map (\rand -> (fromIntegral x) + rand) (randoms (mkStdGen y)))
         ys = take ns (map (\rand -> (fromIntegral y) + rand) (randoms (mkStdGen x)))
         colors = zipWith colorPixel' xs ys
