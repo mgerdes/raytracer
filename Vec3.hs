@@ -3,6 +3,7 @@ module Vec3 where
 import System.Random
 import Prelude hiding ((<*>))
 
+type Vec2 = (Double, Double)
 type Vec3 = (Double, Double, Double)
 
 (<+>) :: Vec3 -> Vec3 -> Vec3

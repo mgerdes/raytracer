@@ -51,7 +51,7 @@ data Hitable = Sphere {
     rotateYCos :: Double,
     rotateYSin :: Double,
     rotateYHitable :: Hitable
-} deriving Show
+}
 
 createBox :: Vec3 -> Vec3 -> Material -> Hitable
 createBox (p0x, p0y, p0z) (p1x, p1y, p1z) mat = 
@@ -83,6 +83,13 @@ hitableIntersect Sphere { sphereCenter = so,
 
         position = pointAtTime ray t
         normal = normalize (position <-> so)
+
+        (px, py, pz) = (position <-> so) </> sr
+        phi = atan2 pz px
+        theta = asin py
+        u = 1.0 - (phi + pi) / (2.0 * pi)
+        v = (theta + (0.5 * pi)) / pi
+        texCoord = (u, v)
     in 
         if det < 0 || t < 0 then
             Nothing
@@ -90,7 +97,8 @@ hitableIntersect Sphere { sphereCenter = so,
             Just HitRec { hrTime = t, 
                           hrPosition = position, 
                           hrNormal = normal,
-                          hrMaterial = mat }
+                          hrMaterial = mat,
+                          hrTexCoord = texCoord }
 
 hitableIntersect XYRect { xyRect_x0 = x0,
                           xyRect_x1 = x1,
@@ -113,7 +121,8 @@ hitableIntersect XYRect { xyRect_x0 = x0,
             Just HitRec { hrTime = t,
                           hrPosition = position,
                           hrNormal = normal,
-                          hrMaterial = mat }
+                          hrMaterial = mat,
+                          hrTexCoord = (0.0, 0.0) }
 
 hitableIntersect XZRect { xzRect_x0 = x0,
                           xzRect_x1 = x1,
@@ -136,7 +145,8 @@ hitableIntersect XZRect { xzRect_x0 = x0,
             Just HitRec { hrTime = t,
                           hrPosition = position,
                           hrNormal = normal,
-                          hrMaterial = mat }
+                          hrMaterial = mat, 
+                          hrTexCoord = (0.0, 0.0) }
 
 hitableIntersect YZRect { yzRect_y0 = y0,
                           yzRect_y1 = y1,
@@ -159,7 +169,8 @@ hitableIntersect YZRect { yzRect_y0 = y0,
             Just HitRec { hrTime = t,
                           hrPosition = position,
                           hrNormal = normal,
-                          hrMaterial = mat }
+                          hrMaterial = mat,
+                          hrTexCoord = (0.0, 0.0) }
 
 hitableIntersect FlipNormals { flipNormalsHitable = h } ray =
     let maybeHr = hitableIntersect h ray
@@ -167,7 +178,8 @@ hitableIntersect FlipNormals { flipNormalsHitable = h } ray =
         Just hr -> Just HitRec { hrTime = hrTime hr,
                                  hrPosition = hrPosition hr,
                                  hrNormal = (hrNormal hr) <*> (-1.0),
-                                 hrMaterial = hrMaterial hr }
+                                 hrMaterial = hrMaterial hr,
+                                 hrTexCoord = (0.0, 0.0) }
         Nothing -> Nothing
 
 hitableIntersect Translate { translateHitable = h, translateOffset = o }
@@ -178,7 +190,8 @@ hitableIntersect Translate { translateHitable = h, translateOffset = o }
         Just hr -> Just HitRec { hrTime = hrTime hr,
                                  hrPosition = (hrPosition hr) <+> o,
                                  hrNormal = hrNormal hr,
-                                 hrMaterial = hrMaterial hr }
+                                 hrMaterial = hrMaterial hr,
+                                 hrTexCoord = (0.0, 0.0) }
         Nothing -> Nothing
 
 hitableIntersect RotateY { rotateYHitable = h, rotateYSin = s, rotateYCos = c }
@@ -189,7 +202,8 @@ hitableIntersect RotateY { rotateYHitable = h, rotateYSin = s, rotateYCos = c }
         Just hr -> Just HitRec { hrTime = hrTime hr,
                                  hrPosition = rotateY (hrPosition hr) c s,
                                  hrNormal = rotateY (hrNormal hr) c s,
-                                 hrMaterial = hrMaterial hr }
+                                 hrMaterial = hrMaterial hr, 
+                                 hrTexCoord = (0.0, 0.0) }
         Nothing -> Nothing
 
 hitableIntersect Box { boxSide0 = s0, boxSide1 = s1, 

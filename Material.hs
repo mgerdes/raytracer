@@ -6,11 +6,11 @@ import Texture
 
 data Material = Lambertian Texture |
                 Metal Texture | 
-                DiffuseLight Texture deriving Show
+                DiffuseLight Texture
 
-scatter :: Material -> Ray -> Vec3 -> Vec3 -> Maybe (Ray, Vec3)
+scatter :: Material -> Ray -> Vec3 -> Vec3 -> Vec2 -> Maybe (Ray, Vec3)
 
-scatter (Lambertian albedo) _ hitPosition hitNormal =  
+scatter (Lambertian albedo) _ hitPosition hitNormal hitTexPosition =
     let p = hitPosition
         n = hitNormal
 
@@ -21,19 +21,19 @@ scatter (Lambertian albedo) _ hitPosition hitNormal =
 
         target = p <+> n <+> (randomInUnitSphere (round kindaRand))
         scattered = Ray { rayOrigin = p, rayDirection = (normalize (target <-> p)) }
-    in Just (scattered, textureValue albedo hitPosition) 
+    in Just (scattered, textureValue albedo hitPosition hitTexPosition) 
 
-scatter (Metal albedo) rayIn hitPosition hitNormal = 
+scatter (Metal albedo) rayIn hitPosition hitNormal hitTexPosition = 
     let rd = rayDirection rayIn
         p = hitPosition
         n = hitNormal
 
         scattered = Ray { rayOrigin = p, rayDirection = reflect rd n }
-    in Just (scattered, textureValue albedo hitPosition)
+    in Just (scattered, textureValue albedo hitPosition hitTexPosition)
 
-scatter (DiffuseLight _) _ _ _ = Nothing
+scatter (DiffuseLight _) _ _ _ _ = Nothing
 
 materialEmitted :: Material -> Vec3 -> Vec3
 materialEmitted (Lambertian _) _ = (0.0, 0.0, 0.0)
 materialEmitted (Metal _) _ = (0.0, 0.0, 0.0)
-materialEmitted (DiffuseLight t) p = textureValue t p 
+materialEmitted (DiffuseLight t) p = textureValue t p (0.0, 0.0)

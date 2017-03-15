@@ -7,8 +7,9 @@ data HitRec = HitRec {
     hrTime :: Double,
     hrPosition :: Vec3,
     hrNormal :: Vec3,
-    hrMaterial :: Material
-} deriving Show
+    hrMaterial :: Material,
+    hrTexCoord :: Vec2
+}
 
 instance Eq HitRec where
     x == y = hrTime x == hrTime y

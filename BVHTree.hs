@@ -12,12 +12,12 @@ data BVHTree = BVHTree {
     bvhBB :: BoundingBox,
     bvhLeft :: BVHTree,
     bvhRight :: BVHTree
-} | BVHTreeLeaf Hitable Hitable deriving Show
+} | BVHTreeLeaf Hitable Hitable 
 
 data BoundingBox = BoundingBox {
     bbMin :: Vec3, 
     bbMax :: Vec3 
-} deriving Show
+} 
 
 minMaybe :: Ord a => Maybe a -> Maybe a -> Maybe a
 minMaybe Nothing b = b
