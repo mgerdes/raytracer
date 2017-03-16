@@ -12,12 +12,12 @@ data BVHTree = BVHTree {
     bvhBB :: BoundingBox,
     bvhLeft :: BVHTree,
     bvhRight :: BVHTree
-} | BVHTreeLeaf Hitable Hitable 
+} | BVHTreeLeaf Hitable Hitable deriving Show
 
 data BoundingBox = BoundingBox {
     bbMin :: Vec3, 
     bbMax :: Vec3 
-} 
+} deriving Show 
 
 minMaybe :: Ord a => Maybe a -> Maybe a -> Maybe a
 minMaybe Nothing b = b
@@ -94,11 +94,12 @@ createBoundingBox RotateY { rotateYHitable = h, rotateYCos = c, rotateYSin = s }
     let bb = createBoundingBox h   
         (x0, y0, z0) = bbMin bb
         (x1, y1, z1) = bbMax bb
-        bbPts = map (\(u, v, w) -> rotateY (x0 + u * x1, y0 + v * y1, z0 + w * z1) c s) 
+        bbPts = map (\(u, v, w) -> rotateY ((1 - u) * x0 + u * x1, (1 - v) * y0 + v * y1, (1 - w) * z0 + w * z1) c s) 
                     [(0, 0, 0), (0, 0, 1), (0, 1, 0), (0, 1, 1), (1, 0, 0), (1, 0, 1), (1, 1, 0), (1, 1, 1)]
         minPt = foldl minCoord (head bbPts) (tail bbPts)
         maxPt = foldl maxCoord (head bbPts) (tail bbPts)
-    in BoundingBox { bbMin = minPt, bbMax = maxPt }
+    in 
+        BoundingBox { bbMin = minPt, bbMax = maxPt }
 
 createBoundingBox Box { boxMin = bMin, boxMax = bMax } =   
     BoundingBox { bbMin = bMin, bbMax = bMax }

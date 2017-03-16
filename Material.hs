@@ -6,7 +6,7 @@ import Texture
 
 data Material = Lambertian Texture |
                 Metal Texture | 
-                DiffuseLight Texture
+                DiffuseLight Texture deriving Show
 
 scatter :: Material -> Ray -> Vec3 -> Vec3 -> Vec2 -> Maybe (Ray, Vec3)
 

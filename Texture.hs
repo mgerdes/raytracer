@@ -8,6 +8,11 @@ data Texture = ConstantTexture Vec3
              | CheckeredTexture Texture Texture 
              | ImageTexture (Image PixelRGB8)
 
+instance Show Texture where
+    show (ConstantTexture v) = "(ConstantTexture " ++ (show v) ++ ")"
+    show (CheckeredTexture t0 t1) = "(CheckeredTexture " ++ (show t0) ++ " " ++ (show t1) ++ ")"
+    show (ImageTexture _) = "(ImageTexture)" 
+
 textureValue :: Texture -> Vec3 -> Vec2 -> Vec3
 
 textureValue (ConstantTexture c) _ _ = c 

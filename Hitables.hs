@@ -51,7 +51,7 @@ data Hitable = Sphere {
     rotateYCos :: Double,
     rotateYSin :: Double,
     rotateYHitable :: Hitable
-}
+} deriving Show
 
 createBox :: Vec3 -> Vec3 -> Material -> Hitable
 createBox (p0x, p0y, p0z) (p1x, p1y, p1z) mat = 
@@ -146,7 +146,7 @@ hitableIntersect XZRect { xzRect_x0 = x0,
                           hrPosition = position,
                           hrNormal = normal,
                           hrMaterial = mat, 
-                          hrTexCoord = (0.0, 0.0) }
+                          hrTexCoord = ((x - x0) / (x1 - x0), (z - z0) / (z1 - z0)) }
 
 hitableIntersect YZRect { yzRect_y0 = y0,
                           yzRect_y1 = y1,
@@ -203,7 +203,7 @@ hitableIntersect RotateY { rotateYHitable = h, rotateYSin = s, rotateYCos = c }
                                  hrPosition = rotateY (hrPosition hr) c s,
                                  hrNormal = rotateY (hrNormal hr) c s,
                                  hrMaterial = hrMaterial hr, 
-                                 hrTexCoord = (0.0, 0.0) }
+                                 hrTexCoord = hrTexCoord hr }
         Nothing -> Nothing
 
 hitableIntersect Box { boxSide0 = s0, boxSide1 = s1, 

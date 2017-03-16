@@ -18,10 +18,10 @@ height :: Int
 height = 400
 
 cameraFrom :: Vec3
-cameraFrom = (0.0, 8.0, -10.0)
+cameraFrom = (0.0, 10.0, -30.0)
 
 cameraTo :: Vec3
-cameraTo = (0.0, 1.0, 0.0)
+cameraTo = (0.0, 0.0, 0.0)
 
 camera :: Camera
 camera = createCamera cameraFrom 
@@ -74,7 +74,7 @@ rayTraceImage fileName hitables =
 
         colorPixel :: Int -> Int -> PixelRGB8
         colorPixel x y = 
-            let ns = 100
+            let ns = 10
                 xs = take ns (map (\rand -> (fromIntegral x) + rand) (randoms (mkStdGen y)))
                 ys = take ns (map (\rand -> (fromIntegral y) + rand) (randoms (mkStdGen x)))
                 colors = zipWith colorPixel' xs ys
@@ -83,35 +83,51 @@ rayTraceImage fileName hitables =
 
     in do writePng fileName (generateImage colorPixel width height)
 
+readTexture :: String -> IO (Image PixelRGB8)
+readTexture fileName = do
+    eitherImg <- readImage fileName
+    case eitherImg of
+         Right dynamicImg -> return (convertRGB8 dynamicImg)
+
 main :: IO()
 main = do 
-    eitherImg <- readImage "earth.jpg"
-    case eitherImg of
-        Left err -> putStrLn err
-        Right dynamicImg -> 
-            let img = convertRGB8 dynamicImg
-                hitables = [
-                    Sphere {
-                        sphereCenter = (0.0, 1.0, 0.0),
-                        sphereRadius = 1.0,
-                        sphereMaterial = Lambertian (ImageTexture img)
-                    },
-                
-                    Sphere { 
-                        sphereCenter = (-2.2, 1.0, 0.0),
-                        sphereRadius = 1.0,
-                        sphereMaterial = Metal (ConstantTexture (0.70, 0.75, 0.71)) 
-                    },
-                            
-                    Sphere { 
-                        sphereCenter = (2.2, 1.0, 0.0),
-                        sphereRadius = 1.0,
-                        sphereMaterial = Metal (ConstantTexture (0.87, 0.72, 0.53)) 
-                    },
+    texture1 <- readTexture "earth.jpg"
+    texture2 <- readTexture "cavs.png"
+    rayTraceImage "out.png" 
+            [ 
+            Sphere {
+                sphereCenter = (0.0, 1.0, 5.5),
+                sphereRadius = 1.0,
+                sphereMaterial = Lambertian (ImageTexture texture1)
+            },
+        
+            Sphere { 
+                sphereCenter = (-2.5, 1.0, 5.5),
+                sphereRadius = 1.0,
+                sphereMaterial = Metal (ConstantTexture (0.70, 0.75, 0.71)) 
+            },
+                    
+            Sphere { 
+                sphereCenter = (2.5, 1.0, 5.5),
+                sphereRadius = 1.0,
+                sphereMaterial = Metal (ConstantTexture (0.87, 0.72, 0.53)) 
+            },
 
-                    Sphere {
-                        sphereCenter = (0.0, -1000.0, 0.0),
-                        sphereRadius = 1000.0,
-                        sphereMaterial = Lambertian (ConstantTexture (0.8, 0.8, 0.8)) 
-                    } ]
-            in do rayTraceImage "out.png" hitables
+            Sphere {
+                sphereCenter = (0.0, -1000.0, 0.0),
+                sphereRadius = 1000.0,
+                sphereMaterial = Lambertian (ConstantTexture (0.8, 0.8, 0.8))
+            },
+
+            RotateY {
+                rotateYHitable =
+                    XZRect {
+                        xzRect_x0 = -5.0, xzRect_x1 = 5.0,
+                        xzRect_z0 = -5.0, xzRect_z1 = 5.0,
+                        xzRect_y = 0.0,
+                        xzRectMaterial = Lambertian (ImageTexture texture2)
+                    },
+                rotateYCos = cos (pi),
+                rotateYSin = sin (pi)
+            }
+            ]
