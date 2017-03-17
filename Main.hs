@@ -12,22 +12,22 @@ import Material
 import BVHTree
 
 width :: Int
-width = 400
+width = 800
 
 height :: Int
-height = 400
+height = 800
 
 cameraFrom :: Vec3
-cameraFrom = (0.0, 10.0, -30.0)
+cameraFrom = (278.0, 278.0, -800.0)
 
 cameraTo :: Vec3
-cameraTo = (0.0, 0.0, 0.0)
+cameraTo = (278.0, 278.0, 0.0)
 
 camera :: Camera
 camera = createCamera cameraFrom 
                       cameraTo 
                       (0.0, 1.0, 0.0)
-                      20.0 
+                      40.0 
                       ((fromIntegral width) / (fromIntegral height))
                       0.0
                       (distance cameraFrom cameraTo)
@@ -37,13 +37,8 @@ rayTraceImage fileName hitables =
     let bvh = createBVHTree hitables (mkStdGen 10)
 
         colorBackground :: Ray -> Vec3
-        colorBackground ray = 
-            let (_, rdy, _) = rayDirection ray 
-                t = 0.5 * rdy + 0.5
-                r = (1.0 - t) + 0.5 * t
-                g = (1.0 - t) + 0.7 * t
-                b = (1.0 - t) + 1.0 * t
-            in (r, g, b)
+        colorBackground _ = 
+            (0.0, 0.0, 0.0)
 
         colorHitRec :: HitRec -> Ray -> Int -> Vec3
         colorHitRec hr rayIn depth = 
@@ -74,7 +69,7 @@ rayTraceImage fileName hitables =
 
         colorPixel :: Int -> Int -> PixelRGB8
         colorPixel x y = 
-            let ns = 10
+            let ns = 1000
                 xs = take ns (map (\rand -> (fromIntegral x) + rand) (randoms (mkStdGen y)))
                 ys = take ns (map (\rand -> (fromIntegral y) + rand) (randoms (mkStdGen x)))
                 colors = zipWith colorPixel' xs ys
@@ -91,43 +86,74 @@ readTexture fileName = do
 
 main :: IO()
 main = do 
-    texture1 <- readTexture "earth.jpg"
-    texture2 <- readTexture "cavs.png"
+    earthTexture <- readTexture "earth.jpg"
     rayTraceImage "out.png" 
-            [ 
-            Sphere {
-                sphereCenter = (0.0, 1.0, 5.5),
-                sphereRadius = 1.0,
-                sphereMaterial = Lambertian (ImageTexture texture1)
-            },
-        
-            Sphere { 
-                sphereCenter = (-2.5, 1.0, 5.5),
-                sphereRadius = 1.0,
-                sphereMaterial = Metal (ConstantTexture (0.70, 0.75, 0.71)) 
-            },
-                    
-            Sphere { 
-                sphereCenter = (2.5, 1.0, 5.5),
-                sphereRadius = 1.0,
-                sphereMaterial = Metal (ConstantTexture (0.87, 0.72, 0.53)) 
+        [ 
+            Translate {
+                translateOffset = (130.0, 0.0, 65.0),
+                translateHitable = RotateY {
+                    rotateYCos = cos (-0.314),
+                    rotateYSin = sin (-0.314),
+                    rotateYHitable = createBox (0.0, 0.0, 0.0) (165.0, 165.0, 165.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))) 
+            }},
+
+            Translate {
+                translateOffset = (130.0 + 0.5 * 165.0, 165.0 + 50.0, 65.0 + 0.5 * 165.0),
+                translateHitable = 
+                    Sphere {
+                        sphereCenter = (0.0, 0.0, 0.0),
+                        sphereRadius = 50.0,
+                        sphereMaterial = Lambertian (ImageTexture earthTexture)
+                    }
             },
 
-            Sphere {
-                sphereCenter = (0.0, -1000.0, 0.0),
-                sphereRadius = 1000.0,
-                sphereMaterial = Lambertian (ConstantTexture (0.8, 0.8, 0.8))
+            Translate {
+                translateOffset = (265.0, 0.0, 295.0),
+                translateHitable = RotateY { 
+                    rotateYCos = cos 0.261,
+                    rotateYSin = sin 0.261,
+                    rotateYHitable = createBox (0.0, 0.0, 0.0) (165.0, 330.0, 165.0) (Metal (ConstantTexture (0.73, 0.73, 0.73))) 
+            }},
+
+            FlipNormals YZRect { 
+                yzRect_y0 = 0, yzRect_y1 = 555,
+                yzRect_z0 = 0, yzRect_z1 = 555,
+                yzRect_x = 555,
+                yzRectMaterial = Lambertian (ConstantTexture (0.22, 0.72, 0.22)) 
             },
 
-            RotateY {
-                rotateYHitable =
-                    XZRect {
-                        xzRect_x0 = -5.0, xzRect_x1 = 5.0,
-                        xzRect_z0 = -5.0, xzRect_z1 = 5.0,
-                        xzRect_y = 0.0,
-                        xzRectMaterial = Lambertian (ImageTexture texture2)
-                    },
-                rotateYCos = cos (pi),
-                rotateYSin = sin (pi)
+            YZRect { 
+                yzRect_y0 = 0, yzRect_y1 = 555,
+                yzRect_z0 = 0, yzRect_z1 = 555,
+                yzRect_x = 0,
+                yzRectMaterial = Lambertian (ConstantTexture (0.72, 0.22, 0.22)) 
+            },
+
+            XZRect {
+                xzRect_x0 = 113, xzRect_x1 = 443,
+                xzRect_z0 = 127, xzRect_z1 = 432,
+                xzRect_y = 554,
+                xzRectMaterial = DiffuseLight (ConstantTexture (4.0, 4.0, 4.0)) 
+            },
+
+            XZRect { 
+                xzRect_x0 = 0, xzRect_x1 = 555,
+                xzRect_z0 = 0, xzRect_z1 = 555,
+                xzRect_y = 0,
+                xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+            },
+
+            FlipNormals XZRect { 
+                xzRect_x0 = 0, xzRect_x1 = 555,
+                xzRect_z0 = 0, xzRect_z1 = 555,
+                xzRect_y = 555,
+                xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+            },
+
+             FlipNormals XYRect { 
+                xyRect_x0 = 0, xyRect_x1 = 555,
+                xyRect_y0 = 0, xyRect_y1 = 555,
+                xyRect_z = 555,
+                xyRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
             }
-            ]
+        ]

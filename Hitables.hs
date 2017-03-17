@@ -122,7 +122,7 @@ hitableIntersect XYRect { xyRect_x0 = x0,
                           hrPosition = position,
                           hrNormal = normal,
                           hrMaterial = mat,
-                          hrTexCoord = (0.0, 0.0) }
+                          hrTexCoord = ((x - x0) / (x1 - x0), (y - y0) / (y1 - y0)) }
 
 hitableIntersect XZRect { xzRect_x0 = x0,
                           xzRect_x1 = x1,
@@ -170,7 +170,7 @@ hitableIntersect YZRect { yzRect_y0 = y0,
                           hrPosition = position,
                           hrNormal = normal,
                           hrMaterial = mat,
-                          hrTexCoord = (0.0, 0.0) }
+                          hrTexCoord = ((z - z0) / (z1 - z0), 1.0 - ((y - y0) / (y1 - y0))) }
 
 hitableIntersect FlipNormals { flipNormalsHitable = h } ray =
     let maybeHr = hitableIntersect h ray
@@ -179,7 +179,7 @@ hitableIntersect FlipNormals { flipNormalsHitable = h } ray =
                                  hrPosition = hrPosition hr,
                                  hrNormal = (hrNormal hr) <*> (-1.0),
                                  hrMaterial = hrMaterial hr,
-                                 hrTexCoord = (0.0, 0.0) }
+                                 hrTexCoord = hrTexCoord hr }
         Nothing -> Nothing
 
 hitableIntersect Translate { translateHitable = h, translateOffset = o }
@@ -191,7 +191,7 @@ hitableIntersect Translate { translateHitable = h, translateOffset = o }
                                  hrPosition = (hrPosition hr) <+> o,
                                  hrNormal = hrNormal hr,
                                  hrMaterial = hrMaterial hr,
-                                 hrTexCoord = (0.0, 0.0) }
+                                 hrTexCoord = hrTexCoord hr }
         Nothing -> Nothing
 
 hitableIntersect RotateY { rotateYHitable = h, rotateYSin = s, rotateYCos = c }
