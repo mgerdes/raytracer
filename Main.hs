@@ -15,18 +15,18 @@ width :: Int
 width = 800
 
 height :: Int
-height = 800
+height = 300
 
 cameraFrom :: Vec3
-cameraFrom = (278.0, 278.0, -800.0)
+cameraFrom = (150.0, 50.0, 50.0)
 
 cameraTo :: Vec3
-cameraTo = (278.0, 278.0, 0.0)
+cameraTo = (100.0, 50.0, 500.0)
 
 camera :: Camera
 camera = createCamera cameraFrom 
                       cameraTo 
-                      (0.0, 1.0, 0.0)
+                      (0.1, 1.0, 0.0)
                       40.0 
                       ((fromIntegral width) / (fromIntegral height))
                       0.0
@@ -69,7 +69,7 @@ rayTraceImage fileName hitables =
 
         colorPixel :: Int -> Int -> PixelRGB8
         colorPixel x y = 
-            let ns = 1000
+            let ns = 100
                 xs = take ns (map (\rand -> (fromIntegral x) + rand) (randoms (mkStdGen y)))
                 ys = take ns (map (\rand -> (fromIntegral y) + rand) (randoms (mkStdGen x)))
                 colors = zipWith colorPixel' xs ys
@@ -84,76 +84,111 @@ readTexture fileName = do
     case eitherImg of
          Right dynamicImg -> return (convertRGB8 dynamicImg)
 
+lightColors :: [Vec3]
+lightColors = [ (144.0 / 255.0, 48.0 / 255.0, 90.0 / 255.0),
+                (48.0 / 255.0, 60.0 / 255.0, 116.0 / 255.0),
+                (170.0 / 255.0, 137.0 / 255.0, 57.0 / 255.0),
+                (112.0 / 255.0, 156.0 / 255.0, 52.0 / 255.0) ]
+
 main :: IO()
 main = do 
     earthTexture <- readTexture "earth.jpg"
     rayTraceImage "out.png" 
+        ((map 
+            (\i -> XYRect {
+                        xyRect_x0 = 0, xyRect_x1 = 555, 
+                        xyRect_y0 = 30 * i, xyRect_y1 = 30 * i + 5,
+                        xyRect_z = 554,
+                        xyRectMaterial = DiffuseLight (ConstantTexture (lightColors !! (mod (round i) 4))) 
+                   }) 
+            [1..19]) 
+        ++ 
+        (map 
+            (\i -> YZRect {
+                        yzRect_y0 = 30 * i, yzRect_y1 = 30 * i + 5, 
+                        yzRect_z0 = 0, yzRect_z1 = 555,
+                        yzRect_x = 1,
+                        yzRectMaterial = DiffuseLight (ConstantTexture (lightColors !! (mod (round i) 4))) 
+                   }) 
+            [1..19]) 
+        ++ 
+        (map 
+            (\i -> YZRect {
+                        yzRect_y0 = 30 * i, yzRect_y1 = 30 * i + 5, 
+                        yzRect_z0 = 0, yzRect_z1 = 555,
+                        yzRect_x = 554,
+                        yzRectMaterial = DiffuseLight (ConstantTexture (lightColors !! (mod (round i) 4))) 
+                   }) 
+            [1..19]) 
+        ++ 
+        (map 
+            (\i -> XYRect {
+                        xyRect_x0 = 0, xyRect_x1 = 555, 
+                        xyRect_y0 = 30 * i, xyRect_y1 = 30 * i + 5,
+                        xyRect_z = 1,
+                        xyRectMaterial = DiffuseLight (ConstantTexture (lightColors !! (mod (round i) 4))) 
+                   }) 
+            [1..19]) 
+        ++ 
+        (map 
+            (\i -> XZRect {
+                        xzRect_x0 = 50, xzRect_x1 = 505, 
+                        xzRect_z0 = 100 * i + 25, xzRect_z1 = 100 * i + 55,
+                        xzRect_y = 554,
+                        xzRectMaterial = DiffuseLight (ConstantTexture (1.0, 1.0, 1.0)) 
+                   }) 
+            [1..4]) 
+        ++
         [ 
             Translate {
-                translateOffset = (130.0, 0.0, 65.0),
-                translateHitable = RotateY {
-                    rotateYCos = cos (-0.314),
-                    rotateYSin = sin (-0.314),
-                    rotateYHitable = createBox (0.0, 0.0, 0.0) (165.0, 165.0, 165.0) (Lambertian (ConstantTexture (0.73, 0.73, 0.73))) 
-            }},
-
-            Translate {
-                translateOffset = (130.0 + 0.5 * 165.0, 165.0 + 50.0, 65.0 + 0.5 * 165.0),
+                translateOffset = (125.0, 75.0, 450.0),
                 translateHitable = 
                     Sphere {
                         sphereCenter = (0.0, 0.0, 0.0),
-                        sphereRadius = 50.0,
-                        sphereMaterial = Lambertian (ImageTexture earthTexture)
+                        sphereRadius = 75.0,
+                        sphereMaterial = Metal (ConstantTexture (0.18, 0.19, 0.18))
                     }
             },
-
-            Translate {
-                translateOffset = (265.0, 0.0, 295.0),
-                translateHitable = RotateY { 
-                    rotateYCos = cos 0.261,
-                    rotateYSin = sin 0.261,
-                    rotateYHitable = createBox (0.0, 0.0, 0.0) (165.0, 330.0, 165.0) (Metal (ConstantTexture (0.73, 0.73, 0.73))) 
-            }},
 
             FlipNormals YZRect { 
                 yzRect_y0 = 0, yzRect_y1 = 555,
                 yzRect_z0 = 0, yzRect_z1 = 555,
                 yzRect_x = 555,
-                yzRectMaterial = Lambertian (ConstantTexture (0.22, 0.72, 0.22)) 
+                yzRectMaterial = Lambertian (ConstantTexture (0.2, 0.2, 0.2))
             },
 
             YZRect { 
                 yzRect_y0 = 0, yzRect_y1 = 555,
                 yzRect_z0 = 0, yzRect_z1 = 555,
                 yzRect_x = 0,
-                yzRectMaterial = Lambertian (ConstantTexture (0.72, 0.22, 0.22)) 
-            },
-
-            XZRect {
-                xzRect_x0 = 113, xzRect_x1 = 443,
-                xzRect_z0 = 127, xzRect_z1 = 432,
-                xzRect_y = 554,
-                xzRectMaterial = DiffuseLight (ConstantTexture (4.0, 4.0, 4.0)) 
+                yzRectMaterial = Lambertian (ConstantTexture (0.2, 0.2, 0.2))
             },
 
             XZRect { 
                 xzRect_x0 = 0, xzRect_x1 = 555,
                 xzRect_z0 = 0, xzRect_z1 = 555,
                 xzRect_y = 0,
-                xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+                xzRectMaterial = Lambertian (ConstantTexture (0.2, 0.2, 0.2))
             },
 
             FlipNormals XZRect { 
                 xzRect_x0 = 0, xzRect_x1 = 555,
                 xzRect_z0 = 0, xzRect_z1 = 555,
                 xzRect_y = 555,
-                xzRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+                xzRectMaterial = Lambertian (ConstantTexture (0.2, 0.2, 0.2))
             },
 
-             FlipNormals XYRect { 
+            FlipNormals XYRect { 
                 xyRect_x0 = 0, xyRect_x1 = 555,
                 xyRect_y0 = 0, xyRect_y1 = 555,
                 xyRect_z = 555,
-                xyRectMaterial = Lambertian (ConstantTexture (0.73, 0.73, 0.73)) 
+                xyRectMaterial = Lambertian (ConstantTexture (0.2, 0.2, 0.2))
+            },
+
+            XYRect { 
+                xyRect_x0 = 0, xyRect_x1 = 555,
+                xyRect_y0 = 0, xyRect_y1 = 555,
+                xyRect_z = 0,
+                xyRectMaterial = Lambertian (ConstantTexture (0.2, 0.2, 0.2)) 
             }
-        ]
+        ])

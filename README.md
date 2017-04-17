@@ -4,3 +4,4 @@ Little raytracer largely inspired by [Ray Tracing in One Weekend](https://www.am
 # Demos
 ![spheres](spheres.png)
 ![cornell_box](cornell_box.png)
+![lights](lights.png)
